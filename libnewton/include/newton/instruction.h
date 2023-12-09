@@ -45,6 +45,10 @@ typedef enum
   /* Effects */
   PRISM_INSTRUCTION_BLUR = 0x06,
 
+  /* Register instructions */
+  PRISM_INSTRUCTION_LOADX = 0x08,
+  PRISM_INSTRUCTION_LOADY = 0x09,
+
   /* Misc */
   PRISM_IGNORE_INSTRUCTION = 0xFE,
   PRISM_EXCEPTION = 0xFF,
@@ -128,6 +132,19 @@ typedef union
     PRISM_OPTION_TIME_SEC = 2,
     PRISM_OPTION_TIME_MIN = 3,
   } TimeOptions;
+
+  enum
+#ifdef __C23_ATTRIBUTES
+      [[gnu::packed]]
+#else
+      __attribute__((__packed__))
+#endif
+  {
+    PRISM_OPTION_LOAD_SIZE = 0,
+    PRISM_OPTION_LOAD_R = 1,
+    PRISM_OPTION_LOAD_G = 2,
+    PRISM_OPTION_LOAD_B = 3,
+  } LoadOptions;
 
 } PrismInstructionOptions;
 

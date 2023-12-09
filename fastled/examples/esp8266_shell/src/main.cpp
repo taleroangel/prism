@@ -6,7 +6,7 @@
 /* -- Configuration definitions -- */
 #define CONFIG_SERIAL_RATE 115200UL
 #define CONFIG_LED_TYPE NEOPIXEL
-#define CONFIG_LED_DATA_PIN D4
+#define CONFIG_LED_DATA_PIN D2
 #define CONFIG_NUM_LEDS 30
 
 /* -- LED Configuration -- */
@@ -20,16 +20,26 @@ void setup()
 {
 	// Initialize Serial
 	Serial.begin(CONFIG_SERIAL_RATE);
+
 	Serial.println();
 	Serial.println(__DATE__);
 
 	// Initialize Logger
-	Logger.begin(&Serial, Level::ALL);
+	Logger.begin(&Serial,
+#ifdef DEBUG
+				 Level::ALL
+#else
+				 Level::I
+#endif
+
+	);
 	Logger.log<Level::D>(F("Setup"), F("Serial com initialized"));
 
 	// Initialize LED strip
 	FastLED.setMaxPowerInVoltsAndMilliamps(LED_MAX_VOLTS, LED_MAX_MAMPS);
 	FastLED.addLeds<CONFIG_LED_TYPE, CONFIG_LED_DATA_PIN>(NewtonInterpreter.LedBuffer, CONFIG_NUM_LEDS);
+	FastLED.clear();
+	FastLED.show();
 }
 
 void loop()
@@ -58,10 +68,25 @@ void loop()
 		Logger.log<Level::I>(F("CMD"), command);
 
 		// Parse the instruction
-		auto instruction = Newton_ParseInstructionLiteral(command.c_str());
+		auto instruction = Newton_ParseInstructionLiteral(command.c_str(), &NewtonInterpreter.Registers);
 
 		// Handle instruction
 		NewtonInterpreter.Instruction(instruction);
 		FastLED.show();
+
+		// Show instruction load
+		switch (instruction.instruction)
+		{
+		case PRISM_INSTRUCTION_LOADX:
+			Logger.log<Level::I>(F("Newton"), String{F("Loaded X with value: 0x")} + String(NewtonInterpreter.Registers.X, 16));
+			break;
+
+		case PRISM_INSTRUCTION_LOADY:
+			Logger.log<Level::I>(F("Newton"), String{F("Loaded Y with value: 0x")} + String(NewtonInterpreter.Registers.Y, 16));
+			break;
+
+		default:
+			break;
+		}
 	}
 }

@@ -89,6 +89,46 @@ int main() {
       0b0001001011110000, PRISM_INSTRUCTION_SET,
       (PrismInstructionOptions){.ColorOptions = PRISM_OPTION_COLOR_BLUE}, 0xF0);
 
+  // Set register X with S
+  assert_instruction(
+      0b0010000000000000, PRISM_INSTRUCTION_LOADX,
+      (PrismInstructionOptions){.LoadOptions = PRISM_OPTION_LOAD_SIZE}, 0x00);
+
+  // Set register X with R FF
+  assert_instruction(
+      0b0010000111111111, PRISM_INSTRUCTION_LOADX,
+      (PrismInstructionOptions){.LoadOptions = PRISM_OPTION_LOAD_R}, 0xFF);
+
+  // Set register X with G FF
+  assert_instruction(
+      0b0010001011111111, PRISM_INSTRUCTION_LOADX,
+      (PrismInstructionOptions){.LoadOptions = PRISM_OPTION_LOAD_G}, 0xFF);
+
+  // Set register X with R FF
+  assert_instruction(
+      0b0010001111111111, PRISM_INSTRUCTION_LOADX,
+      (PrismInstructionOptions){.LoadOptions = PRISM_OPTION_LOAD_B}, 0xFF);
+
+  // Set register Y with S
+  assert_instruction(
+      0b0010010000000000, PRISM_INSTRUCTION_LOADY,
+      (PrismInstructionOptions){.LoadOptions = PRISM_OPTION_LOAD_SIZE}, 0x00);
+
+  // Set register Y with R FF
+  assert_instruction(
+      0b0010010111111111, PRISM_INSTRUCTION_LOADY,
+      (PrismInstructionOptions){.LoadOptions = PRISM_OPTION_LOAD_R}, 0xFF);
+
+  // Set register Y with G FF
+  assert_instruction(
+      0b0010011011111111, PRISM_INSTRUCTION_LOADY,
+      (PrismInstructionOptions){.LoadOptions = PRISM_OPTION_LOAD_G}, 0xFF);
+
+  // Set register Y with R FF
+  assert_instruction(
+      0b0010011111111111, PRISM_INSTRUCTION_LOADY,
+      (PrismInstructionOptions){.LoadOptions = PRISM_OPTION_LOAD_B}, 0xFF);
+
   // Blur All
   assert_instruction(
       0b0001100011110000, PRISM_INSTRUCTION_BLUR,

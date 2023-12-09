@@ -14,6 +14,7 @@ class NewtonFastLEDInterpreter
 {
 public:
 	CRGB LedBuffer[MAX_LEDS];
+	NewtonRegisters Registers;
 
 private:
 	CRGB Buffer[MAX_LEDS];
@@ -140,6 +141,48 @@ public:
 
 			case PrismInstructionOptions::PRISM_OPTION_TIME_MIN:
 				delay((unsigned long)(instruction.value * 60000UL));
+				break;
+			}
+			break;
+
+		case PrismInstructionSet::PRISM_INSTRUCTION_LOADY:
+			switch (instruction.options.LoadOptions)
+			{
+			case PrismInstructionOptions::PRISM_OPTION_LOAD_SIZE:
+				Registers.Y = MAX_LEDS;
+				break;
+
+			case PrismInstructionOptions::PRISM_OPTION_LOAD_R:
+				Registers.Y = Buffer[static_cast<size_t>(instruction.value)].red;
+				break;
+
+			case PrismInstructionOptions::PRISM_OPTION_LOAD_G:
+				Registers.Y = Buffer[static_cast<size_t>(instruction.value)].green;
+				break;
+
+			case PrismInstructionOptions::PRISM_OPTION_LOAD_B:
+				Registers.Y = Buffer[static_cast<size_t>(instruction.value)].blue;
+				break;
+			}
+			break;
+
+		case PrismInstructionSet::PRISM_INSTRUCTION_LOADX:
+			switch (instruction.options.LoadOptions)
+			{
+			case PrismInstructionOptions::PRISM_OPTION_LOAD_SIZE:
+				Registers.X = MAX_LEDS;
+				break;[[fallthrough]];
+
+			case PrismInstructionOptions::PRISM_OPTION_LOAD_R:
+				Registers.X = Buffer[static_cast<size_t>(instruction.value)].red;
+				break;
+
+			case PrismInstructionOptions::PRISM_OPTION_LOAD_G:
+				Registers.X = Buffer[static_cast<size_t>(instruction.value)].green;
+				break;
+
+			case PrismInstructionOptions::PRISM_OPTION_LOAD_B:
+				Registers.X = Buffer[static_cast<size_t>(instruction.value)].blue;
 				break;
 			}
 			break;

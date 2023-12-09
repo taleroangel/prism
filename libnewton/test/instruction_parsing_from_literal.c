@@ -1,3 +1,4 @@
+#include "newton/registers.h"
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -22,6 +23,10 @@ int main(int argc, char **argv) {
     assert(instructionsFile != nullptr);
   }
 
+  // Create registers
+  NewtonRegisters registers;
+  memset((void *)&registers, 0, sizeof(NewtonRegisters));
+
   // Create buffer
   char readingBuffer[256];
   memset(readingBuffer, '\0', sizeof(readingBuffer));
@@ -41,7 +46,7 @@ int main(int argc, char **argv) {
     char parseLiteral[255];
     strcpy(parseLiteral, readingBuffer);
     PrismInstruction bufferInstruction =
-        Newton_ParseInstructionLiteral(parseLiteral);
+        Newton_ParseInstructionLiteral(parseLiteral, &registers);
 
     // Skip NOP operation
     if (bufferInstruction.instruction == PRISM_IGNORE_INSTRUCTION)

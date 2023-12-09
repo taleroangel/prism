@@ -12,12 +12,17 @@
 
 int main(int argc, char **argv) {
 
+  NewtonRegisters registers;
+  memset((void *)&registers, 0, sizeof(registers));
+
+  uint8_t SizeOfLeds = 0xFF;
+
   char *InputFilename = nullptr;
   char *OutputFilename = nullptr;
 
   { /* _optionSelection lifetime block*/
     int _optionSelection;
-    while ((_optionSelection = getopt(argc, argv, "i:o:")) > 0) {
+    while ((_optionSelection = getopt(argc, argv, "i:o:s")) > 0) {
       switch (_optionSelection) {
         /* Get input filename*/
       case 'i':
@@ -29,20 +34,28 @@ int main(int argc, char **argv) {
         OutputFilename = optarg;
         break;
 
+        /* Get LED strip size */
+      case 's':
+        SizeOfLeds = (uint8_t)atoi(optarg);
+        break;
+
       case '?':
         [[fallthrough]];
       default:
         fprintf(stderr, "Invalid arguments:\
-				\n\t[-i <InputFile> -o <OutputFile>]\n");
+				\n\t[-i <InputFile> -o <OutputFile> (-s <Optional strip size>)]\n");
         exit(EXIT_FAILURE);
       }
     }
   }
 
+  // Set initial X register value
+  registers.X = SizeOfLeds;
+
   /* Validate parameters */
   if (InputFilename == nullptr || OutputFilename == nullptr) {
     fprintf(stderr, "Not enough arguments:\
-				\n\t[-i <InputFile> -o <OutputFile>]\n");
+				\n\t[-i <InputFile> -o <OutputFile> (-s <Optional strip size>)]\n");
     exit(EXIT_FAILURE);
   } else {
     printf("Parsing and compiling: `%s`\n", InputFilename);
@@ -84,7 +97,7 @@ int main(int argc, char **argv) {
 
       /* Instruction parsing */
       PrismInstruction ReaderInstruction =
-          Newton_ParseInstructionLiteral(_readerBufferLine);
+          Newton_ParseInstructionLiteral(_readerBufferLine, &registers);
 
       /* Check instruction NOP */
       switch (ReaderInstruction.instruction) {

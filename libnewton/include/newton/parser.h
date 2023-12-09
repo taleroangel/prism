@@ -7,6 +7,7 @@ extern "C" {
 #endif
 
 #include "instruction.h"
+#include "registers.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -39,7 +40,12 @@ static inline PrismInstruction Newton_ParseInstructionU16(uint16_t byte) {
  * @return PrismInstruction Built Parsed instruction
  */
 static inline PrismInstruction
-Newton_ParseInstructionLiteral(const char *instruction) {
+Newton_ParseInstructionLiteral(const char *instruction,
+                               const NewtonRegisters *
+#ifndef __cplusplus
+							   restrict
+#endif
+							    registers) {
 
   // If instruction pointer is null return exception
   if (instruction == NULL) {
@@ -62,23 +68,79 @@ Newton_ParseInstructionLiteral(const char *instruction) {
 
   /* Ignore instruction */
   if (strcmp(token, "NOP") == 0) {
-    ; /* Do nothing */
+    return parsedInstruction; /* Do nothing */
   }
 
   /* Update the buffer */
   else if (strcmp(token, "UPDT") == 0) {
     parsedInstruction.instruction = PRISM_INSTRUCTION_UPDATE;
+    return parsedInstruction;
   }
 
   /* Clear the buffer */
   else if (strcmp(token, "CLR") == 0) {
     parsedInstruction.instruction = PRISM_INSTRUCTION_CLEAR;
+    return parsedInstruction;
+  }
+
+  else if (strcmp(token, "LDX") == 0 || strcmp(token, "LDY") == 0) {
+
+    // Set the instruction
+    parsedInstruction.instruction = strcmp(token, "LDX") == 0
+                                        ? PRISM_INSTRUCTION_LOADX
+                                        : PRISM_INSTRUCTION_LOADY;
+    // Next token is mode
+    token = strtok(NULL, " ");
+
+    switch (token[0]) {
+    case 'S':
+      parsedInstruction.options =
+          (PrismInstructionOptions){.LoadOptions =
+#ifdef __cplusplus
+                                        PrismInstructionOptions::
+#endif
+                                            PRISM_OPTION_LOAD_SIZE};
+      // Instruction already parsed, return the instruction
+      return parsedInstruction;
+
+    case 'R':
+      parsedInstruction.options =
+          (PrismInstructionOptions){.LoadOptions =
+#ifdef __cplusplus
+                                        PrismInstructionOptions::
+#endif
+                                            PRISM_OPTION_LOAD_R};
+      break;
+
+    case 'G':
+      parsedInstruction.options =
+          (PrismInstructionOptions){.LoadOptions =
+#ifdef __cplusplus
+                                        PrismInstructionOptions::
+#endif
+                                            PRISM_OPTION_LOAD_G};
+      break;
+
+    case 'B':
+      parsedInstruction.options =
+          (PrismInstructionOptions){.LoadOptions =
+#ifdef __cplusplus
+                                        PrismInstructionOptions::
+#endif
+                                            PRISM_OPTION_LOAD_B};
+      break;
+
+      // Invalid token detected
+    default:
+      return (PrismInstruction){.instruction = PRISM_EXCEPTION,
+                                .options = {.NoOptions = {}}};
+    }
   }
 
   /* Select a value from buffer */
   else if (strcmp(token, "SEL") == 0) {
-    parsedInstruction.instruction = PRISM_INSTRUCTION_SELECT;
 
+    parsedInstruction.instruction = PRISM_INSTRUCTION_SELECT;
     // Next token is mode
     token = strtok(NULL, " ");
 
@@ -102,18 +164,17 @@ Newton_ParseInstructionLiteral(const char *instruction) {
 #endif
                                             PRISM_OPTION_SELECT_ABSOLUTE};
       break;
+
+      // Invalid token detected
     default:
       return (PrismInstruction){.instruction = PRISM_EXCEPTION,
                                 .options = {.NoOptions = {}}};
     }
-
-    // Next token is value
-    token = strtok(NULL, " ");
-    parsedInstruction.value = (uint8_t)strtol(token, NULL, 16);
   }
 
   /* Select a range from buffer */
   else if (strcmp(token, "RAN") == 0) {
+
     parsedInstruction.instruction = PRISM_INSTRUCTION_RANGE;
     token = strtok(NULL, " ");
 
@@ -146,13 +207,11 @@ Newton_ParseInstructionLiteral(const char *instruction) {
 #endif
                                             PRISM_OPTION_RANGE_ABSOLUTE_END};
     } else {
+
+      // Invalid token detected
       return (PrismInstruction){.instruction = PRISM_EXCEPTION,
                                 .options = {.NoOptions = {}}};
     }
-
-    // Next token is value
-    token = strtok(NULL, " ");
-    parsedInstruction.value = (uint8_t)strtol(token, NULL, 16);
   }
 
   /* Fill a range with a color */
@@ -187,14 +246,11 @@ Newton_ParseInstructionLiteral(const char *instruction) {
                                             PRISM_OPTION_COLOR_BLUE};
       break;
 
+      // Invalid token detected
     default:
       return (PrismInstruction){.instruction = PRISM_EXCEPTION,
                                 .options = {.NoOptions = {}}};
     }
-
-    // Next token is value
-    token = strtok(NULL, " ");
-    parsedInstruction.value = (uint8_t)strtol(token, NULL, 16);
   }
 
   /* Set the selected led with a color */
@@ -229,18 +285,16 @@ Newton_ParseInstructionLiteral(const char *instruction) {
                                             PRISM_OPTION_COLOR_BLUE};
       break;
 
+      // Invalid token detected
     default:
       return (PrismInstruction){.instruction = PRISM_EXCEPTION,
                                 .options = {.NoOptions = {}}};
     }
-
-    // Next token is value
-    token = strtok(NULL, " ");
-    parsedInstruction.value = (uint8_t)strtol(token, NULL, 16);
   }
 
   /* Blur effect */
   else if (strcmp(token, "EBLR") == 0) {
+
     parsedInstruction.instruction = PRISM_INSTRUCTION_BLUR;
     token = strtok(NULL, " ");
 
@@ -259,18 +313,15 @@ Newton_ParseInstructionLiteral(const char *instruction) {
 #endif
                                             PRISM_OPTION_APPLY_RANGE};
     } else {
+      // Invalid token detected
       return (PrismInstruction){.instruction = PRISM_EXCEPTION,
                                 .options = {.NoOptions = {}}};
-      ; //  Ill formed command
     }
-
-    // Next token is value
-    token = strtok(NULL, " ");
-    parsedInstruction.value = (uint8_t)strtol(token, NULL, 16);
   }
 
   /* Sleep for specified amount of time */
   else if (strcmp(token, "SLP") == 0) {
+
     parsedInstruction.instruction = PRISM_INSTRUCTION_SLEEP;
     token = strtok(NULL, " ");
 
@@ -306,19 +357,33 @@ Newton_ParseInstructionLiteral(const char *instruction) {
                   PRISM_OPTION_TIME_MIN,
       };
     } else {
+      // Invalid token detected
       return (PrismInstruction){.instruction = PRISM_EXCEPTION,
                                 .options = {.NoOptions = {}}};
     }
-
-    // Next token is value
-    token = strtok(NULL, " ");
-    parsedInstruction.value = (uint8_t)strtol(token, NULL, 16);
   }
 
   /* Invalid instruction */
   else {
+    // Invalid token detected
     return (PrismInstruction){.instruction = PRISM_EXCEPTION,
                               .options = {.NoOptions = {}}};
+  }
+
+  // Next token is value
+  token = strtok(NULL, " ");
+  switch (token[0]) {
+  case 'X':
+    parsedInstruction.value = registers->X;
+    break;
+
+  case 'Y':
+    parsedInstruction.value = registers->Y;
+    break;
+
+  default:
+    parsedInstruction.value = (uint8_t)strtol(token, NULL, 16);
+    break;
   }
 
   // Return the parsed instruction
