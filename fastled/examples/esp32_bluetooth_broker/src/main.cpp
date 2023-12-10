@@ -73,6 +73,15 @@ namespace Bluetooth
 				// Fetch the data
 				uint16_t rawInstruction = *reinterpret_cast<uint16_t *>(characteristic->getData());
 
+				// Swap the bytes (Big Endian to Little Endian)
+				{ /* _auxiliaryBytes lifetime block */
+					uint8_t _auxiliaryBytes = (rawInstruction & 0xFF00) >> 8UL;
+
+					rawInstruction <<= 8UL;
+					rawInstruction &= 0xFF00UL;
+					rawInstruction |= (_auxiliaryBytes & 0x00FFUL);
+				}
+
 #ifdef DEBUG
 				Logger.log<Level::T>(F("Bluetooth"), String{F("Requested: 0x")} + String(rawInstruction, 16));
 #endif
@@ -187,15 +196,15 @@ namespace Bluetooth
 				uint8_t yRegister = Lights::NewtonInterpreter.Registers.Y;
 
 				// Concat registers (MSB is X register, LSB is Y register)
-				uint16_t byteData = ((xRegister << 8) | yRegister);
+				uint16_t byteData = ((yRegister << 8) | xRegister);
 
 				// Set the characteristic value
 				characteristic->setValue(byteData);
 #ifdef DEBUG
-				Logger.log<Level::T>(
+				Logger.log<Level::D>(
 					F("Bluetooth"),
-					String{F("Requested registers: [X -> 0x")} + String(xRegister, 16) +
-						String{F("] [Y -> 0x")} + String(yRegister, 16) + String{F("]")});
+					String{F("Requested registers (0x")} + String(byteData, 16) + String{F("): [X -> 0x")} +
+						String(xRegister, 16) + String{F("] [Y -> 0x")} + String(yRegister, 16) + String{F("]")});
 #endif
 			}
 
