@@ -1,0 +1,8 @@
+-- Set all leds in strip to white
+CLR
+RAN % 00
+RAN %% FF
+FILL R FF
+FILL G FF
+FILL B FF
+UPDT

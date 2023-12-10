@@ -1,0 +1,13 @@
+-- Use 00 as Pivot
+SEL # 00
+SET R AB
+SET G CD
+
+-- Load pivot values into X and Y
+LDX R 00
+LDY G 00
+
+-- Load SIZE into X
+LDX $ 01
+-- Load VER into Y
+LDY $ 00
