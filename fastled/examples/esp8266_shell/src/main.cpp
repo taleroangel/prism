@@ -68,7 +68,7 @@ void loop()
 		Logger.log<Level::I>(F("CMD"), command);
 
 		// Parse the instruction
-		auto instruction = Newton_ParseInstructionLiteral(command.c_str(), &NewtonInterpreter.Registers);
+		auto instruction = Newton_ParseInstructionLiteral(command.c_str());
 
 		// Handle instruction
 		NewtonInterpreter.Instruction(instruction);
