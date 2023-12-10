@@ -12,6 +12,7 @@
 /* --------- LED Configuration --------- */
 #include <FastLED.h>
 
+#define LIGHT_CONFIG_QUEUE_MAX 512UL
 #define LIGHT_CONFIG_SIZE 30UL
 
 #define LIGHT_CONFIG_LED_TYPE NEOPIXEL

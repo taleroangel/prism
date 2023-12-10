@@ -7,7 +7,9 @@
 #endif
 
 /* --------- External Libraries --------- */
+#include <FastLED.h>
 #include <newton_fastled.hxx>
+#include <etl/queue.h>
 
 /* --------- Arduino Standard Libraries --------- */
 
@@ -32,11 +34,19 @@ namespace Lights
 	constexpr uint8_t Size = LIGHT_CONFIG_SIZE;
 
 	/**
+	 * Instruction queue
+	 */
+	etl::queue<PrismInstruction,
+			   sizeof(PrismInstruction) * LIGHT_CONFIG_QUEUE_MAX,
+			   etl::memory_model::MEMORY_MODEL_MEDIUM>
+		InstructionQueue{};
+
+	/**
 	 * Newton FastLED interpreter
 	 */
 	NewtonFastLEDInterpreter<Size> NewtonInterpreter{};
 
-};
+}
 
 namespace Bluetooth
 {
@@ -49,7 +59,7 @@ namespace Bluetooth
 		/* Newton command interpreter bluetooth characteristic */
 		BLECharacteristic *Newton;
 		BLE2904 NewtonDescriptor;
-	};
+	}
 
 	namespace Callbacks
 	{
@@ -163,9 +173,8 @@ namespace Bluetooth
 					break;
 				}
 #endif
-				// Prompt newton interpreter
-				// TODO! Make a queue
-				Lights::NewtonInterpreter.Instruction(instruction);
+				// Prompt newton interpreter (queue request)
+				Lights::InstructionQueue.push(instruction);
 			};
 
 			/**
@@ -191,25 +200,29 @@ namespace Bluetooth
 			}
 
 		} NewtonCharacteristicCallback;
-	};
-};
+	}
+}
 
 /* --------- Setup and Loop --------- */
 
 void setup()
 {
-	/* Serial Logging */
 #ifdef DEBUG
+	/* Set LED to indicate DEBUG mode */
+	pinMode(GPIO_NUM_2, OUTPUT);
+	digitalWrite(GPIO_NUM_2, HIGH);
+
+	/* Serial Logging */
 	Serial.begin(SERIAL_BAUD_RATE);
 
 	Logger.begin(&Serial, Level::ALL);
-	Logger.log<Level::T>(F("Setup"), F("Serial speed: " STR(SERIAL_BAUD_RATE)));
+	Logger.log<Level::I>(F("Setup"), F("Serial speed: " STR(SERIAL_BAUD_RATE)));
 #endif
 
 	/* Bluetooth Service setup */
 	BLEDevice::init(DEVICE_NAME);
 #ifdef DEBUG
-	Logger.log<Level::T>(F("Network"), String{F("MAC -> ")} + BLEDevice::getAddress().toString().c_str());
+	Logger.log<Level::I>(F("Network"), String{F("MAC -> ")} + BLEDevice::getAddress().toString().c_str());
 #endif
 	Bluetooth::Server = BLEDevice::createServer();
 	Bluetooth::Service = Bluetooth::Server->createService(PRISM_SERVICE_UUID);
@@ -245,13 +258,52 @@ void setup()
 	FastLED.show();
 
 #ifdef DEBUG
-	Logger.log<Level::T>(F("Bluetooth"), F("Device is now discoverable as "
+	Logger.log<Level::I>(F("Bluetooth"), F("Device is now discoverable as "
 										   "`" DEVICE_NAME "`"));
 #endif
 }
 
 void loop()
 {
+	// Check if empty and ignore
+	if (Lights::InstructionQueue.empty())
+		return;
+
+	// Get the instruction
+	auto ExecuteInstruction = Lights::InstructionQueue.front();
+	// Pop the instruction
+	Lights::InstructionQueue.pop();
+
+#ifdef DEBUG
+	Logger.log<Level::D>(
+		F("ExecutionLoop"),
+		String{F("0x")} + String(Newton_WriteInstructionToU16(ExecuteInstruction), 16));
+#endif
+	// Execute the instruction and delay
+	uint32_t DelayTime = Lights::NewtonInterpreter.Instruction(ExecuteInstruction);
+	if (DelayTime > 0)
+	{ /* Async delay lifetime block */
+
+#ifdef DEBUG
+		Logger.log<Level::I>(
+			F("ExecutionTask"),
+			String{F("Requested delay of (ms): ")} + String(DelayTime, 10));
+#endif
+		// Obtain times
+		uint32_t _startTime = millis();
+		uint32_t _currentTime;
+
+		do // Loop until delay finishes
+		{
+			yield();
+			_currentTime = millis();
+		} while ((_currentTime - _startTime) < DelayTime);
+
+#ifdef DEBUG
+		Logger.log<Level::D>(F("ExecutionTask"), F("End of delay"));
+#endif
+	}
+
 	// Show updates on LEDs
 	FastLED.show();
 }
