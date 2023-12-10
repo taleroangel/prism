@@ -1,8 +1,8 @@
-#define _GNU_SOURCE
 #define _POSIX_C_SOURCE 200809L
 
 #include <newton.h>
 
+#include <assert.h>
 #include <getopt.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -10,19 +10,25 @@
 #include <string.h>
 #include <unistd.h>
 
+/**
+ * @brief Show invalid arguments error and stop execution
+ *
+ */
+void ArgumentError() {
+  fprintf(stderr, "Not enough arguments:\
+				\n\t[-i <InputFile> -o <OutputFile>]\n");
+  exit(EXIT_FAILURE);
+}
+
 int main(int argc, char **argv) {
-
-  NewtonRegisters registers;
-  memset((void *)&registers, 0, sizeof(registers));
-
-  uint8_t SizeOfLeds = 0xFF;
 
   char *InputFilename = nullptr;
   char *OutputFilename = nullptr;
 
-  { /* _optionSelection lifetime block*/
+  { /* _optionSelection block*/
     int _optionSelection;
-    while ((_optionSelection = getopt(argc, argv, "i:o:s")) > 0) {
+
+    while ((_optionSelection = getopt(argc, argv, "i:o:s:")) > 0) {
       switch (_optionSelection) {
         /* Get input filename*/
       case 'i':
@@ -34,29 +40,18 @@ int main(int argc, char **argv) {
         OutputFilename = optarg;
         break;
 
-        /* Get LED strip size */
-      case 's':
-        SizeOfLeds = (uint8_t)atoi(optarg);
-        break;
-
       case '?':
         [[fallthrough]];
+
       default:
-        fprintf(stderr, "Invalid arguments:\
-				\n\t[-i <InputFile> -o <OutputFile> (-s <Optional strip size>)]\n");
-        exit(EXIT_FAILURE);
+        ArgumentError();
       }
     }
   }
 
-  // Set initial X register value
-  registers.X = SizeOfLeds;
-
   /* Validate parameters */
   if (InputFilename == nullptr || OutputFilename == nullptr) {
-    fprintf(stderr, "Not enough arguments:\
-				\n\t[-i <InputFile> -o <OutputFile> (-s <Optional strip size>)]\n");
-    exit(EXIT_FAILURE);
+    ArgumentError();
   } else {
     printf("Parsing and compiling: `%s`\n", InputFilename);
   }
@@ -97,7 +92,7 @@ int main(int argc, char **argv) {
 
       /* Instruction parsing */
       PrismInstruction ReaderInstruction =
-          Newton_ParseInstructionLiteral(_readerBufferLine, &registers);
+          Newton_ParseInstructionLiteral(_readerBufferLine);
 
       /* Check instruction NOP */
       switch (ReaderInstruction.instruction) {
@@ -129,8 +124,20 @@ int main(int argc, char **argv) {
       uint16_t InstructionBytes =
           Newton_WriteInstructionToU16(ReaderInstruction);
 
-      /* Write the instruction */
-      fwrite((void *)&InstructionBytes, sizeof(uint16_t), 1, OutputFile);
+      PrismInstruction coherentInstruction =
+          Newton_ParseInstructionU16(InstructionBytes);
+
+      // Check that instruction is coherent
+      assert(*(uint16_t *)(&coherentInstruction) ==
+             *(uint16_t *)(&ReaderInstruction));
+
+      /* Write the instruction (as BigEndian) */
+      fwrite((void *)((uint8_t *)&InstructionBytes + 1), sizeof(uint8_t), 1,
+             OutputFile);
+      fwrite((void *)((uint8_t *)&InstructionBytes + 0), sizeof(uint8_t), 1,
+             OutputFile);
+			 
+      fflush(OutputFile);
     }
 
     /* Deallocate memory */

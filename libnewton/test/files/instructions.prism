@@ -8,7 +8,7 @@ CLR
 UPDT
 
 -- Set first half to blue
-RAN % 0
+RAN % 00
 RAN %% 80
 FILL R 00
 FILL G 00
@@ -78,32 +78,3 @@ SET B 00
 
 -- Update new value
 UPDT
-
--- Use address 00 as pivot
-SEL # 00
-SET R FF
-
--- Load registers
-LDX R 00
-LDY R 00
-
--- Reset pivot
-SET R 00
-
--- Set second LED to X values
-SEL # 01
-SET R X
-SET G X
-SET B X
-
--- Set third LED to Y values
-SEL # 02
-SET R Y
-SET G Y
-SET B Y
-
--- Update values
-UPDT
-
--- Set X to strip size
-LDX S

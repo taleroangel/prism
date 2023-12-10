@@ -45,8 +45,9 @@ int main(int argc, char **argv) {
 
     char parseLiteral[255];
     strcpy(parseLiteral, readingBuffer);
+
     PrismInstruction bufferInstruction =
-        Newton_ParseInstructionLiteral(parseLiteral, &registers);
+        Newton_ParseInstructionLiteral(parseLiteral);
 
     // Skip NOP operation
     if (bufferInstruction.instruction == PRISM_IGNORE_INSTRUCTION)
@@ -55,6 +56,13 @@ int main(int argc, char **argv) {
     // Read from the binary file
     uint16_t expectedBinary = 0x00;
     fread(&expectedBinary, sizeof(uint16_t), 1, expectedFile);
+
+    // Swap endianness
+    { /* _auxBinary lifetime block */
+      uint16_t _auxBinary = expectedBinary;
+      ((uint8_t *)(&expectedBinary))[0] = ((uint8_t *)(&_auxBinary))[1];
+      ((uint8_t *)(&expectedBinary))[1] = ((uint8_t *)(&_auxBinary))[0];
+    }
 
     fprintf(stdout, "> 0x%04X\t", expectedBinary);
     fprintf(stdout, ":: %s\n", readingBuffer);

@@ -7,10 +7,6 @@ extern "C" {
 
 #include <stdint.h>
 
-#ifndef __BYTE_ORDER
-#include <endian.h>
-#endif
-
 /* GNU extensions and C23 [[]] attributes support */
 #if (__STDC_VERSION__ >= 202000L) && defined(__GNUC__)
 #define __C23_ATTRIBUTES
@@ -158,22 +154,11 @@ typedef struct
 #else
     __attribute__((__packed__, aligned(sizeof(uint8_t))))
 #endif
-#if __BYTE_ORDER == __BIG_ENDIAN
-    __NewtonRawInstruction_BigEndian {
+{
   uint8_t instruction : 6;
   uint8_t options : 2;
   uint8_t value;
-}
-#elif __BYTE_ORDER == __LITTLE_ENDIAN
-    __NewtonRawInstruction_LittleEndian {
-  uint8_t value;
-  uint8_t options : 2;
-  uint8_t instruction : 6;
-}
-#else
-#error "No byte order detected (missing 'endian.h' or undefined __BYTE_ORDER)"
-#endif
-_NewtonRawInstruction;
+} _NewtonRawInstruction;
 
 /**
  * @brief Prism parsed instruction
