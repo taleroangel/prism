@@ -123,7 +123,6 @@ typedef union
       __attribute__((__packed__))
 #endif
   {
-    PRISM_OPTION_TIME_US = 0,
     PRISM_OPTION_TIME_MS = 1,
     PRISM_OPTION_TIME_SEC = 2,
     PRISM_OPTION_TIME_MIN = 3,

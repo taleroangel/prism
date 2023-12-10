@@ -382,17 +382,7 @@ extern "C"
 			parsedInstruction.instruction = PRISM_INSTRUCTION_SLEEP;
 			token = strtok(NULL, " ");
 
-			if (strcmp(token, "US") == 0)
-			{
-				parsedInstruction.options = (PrismInstructionOptions){
-					.TimeOptions =
-#ifdef __cplusplus
-						PrismInstructionOptions::
-#endif
-							PRISM_OPTION_TIME_US,
-				};
-			}
-			else if (strcmp(token, "MS") == 0)
+			if (strcmp(token, "MS") == 0)
 			{
 				parsedInstruction.options = (PrismInstructionOptions){
 					.TimeOptions =

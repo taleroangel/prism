@@ -140,11 +140,6 @@ int main() {
       (PrismInstructionOptions){.EffectOptions = PRISM_OPTION_APPLY_RANGE},
       0xF0);
 
-  // Sleep (us)
-  assert_instruction(
-      0b0001110011110000, PRISM_INSTRUCTION_SLEEP,
-      (PrismInstructionOptions){.TimeOptions = PRISM_OPTION_TIME_US}, 0xF0);
-
   // Sleep (ms)
   assert_instruction(
       0b0001110111110000, PRISM_INSTRUCTION_SLEEP,
