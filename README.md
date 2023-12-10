@@ -1,9 +1,9 @@
-# Prism
+# 🌈 Prism
 Prism is a protocol for manipulating LED strips at runtime with a predefined set of instructions in a _Master - Slave_ model
 
 Prism is meant to be extensible in order to allow multiple independent programs to communicate with LED strips
 
-## Roles
+## 🧑‍🏭 Roles
 
 ![Roles Diagram](docs/roles.svg)
 
@@ -12,27 +12,28 @@ Prism is meant to be extensible in order to allow multiple independent programs 
 ### Slave
 A Prism slave is a device attached to a LED strip and interprets commands sent by a [master](#master) in order to trigger changes in color. Slaves will always have a [Newton Interpreter](#newton) which contains the inner [registers](#registers) and interprets commands via [libnewton](#libnewton).
 
-- Slaves can have different LED drivers (FastLED driver is bundled `/fastled/include`)
+- Slaves can have different LED drivers, currently only FastLED driver is bundled `/libnewton/cpp/include/newton/drivers/fastled.hxx`
 - Slaves can communicate via different unique protocols as long as the [master](#master) supports them. [(List of standard communication protocols)](#standard-communication-protocols)
-## Buffer
+## 📜 Buffer
 The buffer is the main data structure inside the [Prism Slave](#slave), it is an array of RGB values whose size is the same as the attached LED strip, each position of the array is 3 bytes long (one byte for each RGB value) and the contents are dumped to the LED strip with the `UPDT` instruction ([See Basic Instructions](#basic-instructions))
 
-## Registers
-The [Prism Slave](#slave) has two 1-byte registers that can be read and set from the master
+## 📃 Variables
+| Variable                  | Code | Description                                 |
+| ------------------------- | ---- | ------------------------------------------- |
+| [Newton](#newton) Version | 0x00 | Interpreter [libnewton](#libnewton) version |
+| Buffer Size               | 0x01 | Amount of LEDs in the [buffer](#buffer)     |
 
-| Register | Default Value                      |
-| -------- | ---------------------------------- |
-| X        | [S constant](#size-number-of-leds) |
-| Y        | 0x00                               |
+## 🎛️ Registers
+The [Prism Slave](#slave) has two 1-byte read/write registers that can be manipulated and queried from the master
 
-Either an RGB value from the [buffer](#buffer) or the [S constant](#size-number-of-leds) can be stored inside a register using `LDX` and `LDY` instructions. [See LoadInstructions](#load-instructions).
+| Register | Default Value                         |
+| -------- | ------------------------------------- |
+| X        | Newton Version [variable](#variables) |
+| Y        | Buffer size [variable](#variables)    |
 
-### Size (Number of LEDs)
-The number of LEDs attached to the strip is stored in a constant called **S**, by default the [X register](#registers) is set on startup to **S**
+Either an RGB value from the [buffer](#buffer) or a [variable](#variables) can be stored inside a register using `LDX` and `LDY` instructions. [See LoadInstructions](#load-instructions).
 
-**S** can be loaded into a register by the `LDX S` and `LDY S` instructions
-
-## Instruction Set
+## 📋️ Instruction Set
 Prism provides a basic set of instructions for manipulating the [buffer](#buffer) and the [slave's](#slave) behaviour.
 
 
@@ -40,7 +41,7 @@ Instructions are sent from [master](#master) to [slave](#slave) in a **16-bit Bi
 
 ![Instruction memory layout](docs/instruction_layout.svg)
 
-Instructions can also be compiled from a _Literal_ into a _Binary_ format with the _Newton Compiler_ `/libnewton/tools/newton_compiler.c`, a _Literal_ interpreter shell with the ESP8266 example can be found in `/fastled/examples/esp8266_shell`
+Instructions can also be compiled from a _Literal_ into a _Binary_ format with the _Newton Compiler_ `/tools/newton_compiler`.
 
 Example of a Prism file with _Instruction Literals_:
 
@@ -55,7 +56,7 @@ FILL B FF
 UPDT
 ```
 
-Get compiled to the following _Binary format_:
+Gets compiled to the following _Binary format_:
 ```
 04 00
 0D 00
@@ -94,7 +95,7 @@ Values in the [buffer](#buffer) can be indexed by their exact position called *A
 - *Absolute Indexing* is achieved by using the **#** operator. The beginning of a block is specified with **#** and the end of it with **##**.
 - *Relative Indexing* is achieved by using the **%** operator. The beginning of a block is specified with **%** and the end of it with **%%**.
 
-> ⚠️ **Warning**: _Aboslute Indexing_ causes undefined or implementation dependant behaviour on the interpreter when the index is greater than the [buffer](#buffer) size. If the number of LEDs is unknown and the register values cannot be obtained use only _Relative Indexing_
+> ⚠️ **Warning**: _Aboslute Indexing_ causes undefined or implementation dependant behaviour on the interpreter when the index is greater than the [buffer](#buffer) size. If the number of LEDs is unknown and the register values cannot be obtained, _Relative Indexing_ is recommended over _Aboslute Indexing_
 
 #### Select Options
 | Name     | Option | Description                                     |
@@ -141,19 +142,19 @@ Apply effects directly on a portion of the [buffer](#buffer)
 ### Load Instructions
 Manipulation of the inner [registers](#registers)
 
-| Name                         | Instruction | Options                      | Value                                                                                                                                     | Description                                                                    |
-| ---------------------------- | ----------- | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Load a value into X register | 0x08 LDX    | [LoadOptions](#load-options) | Buffer [Absolute Index](#absolute-and-relative-indexing) to grab the value from or empty when grabbing [S constant](#size-number-of-leds) | Load an RGB value from the [buffer](#buffer) or the S constant into register X |
-| Load a value into Y register | 0x09 LDY    | [LoadOptions](#load-options) | Buffer [Absolute Index](#absolute-and-relative-indexing) to grab the value from or empty when grabbing [S constant](#size-number-of-leds) | Load an RGB value from the [buffer](#buffer) or the S constant into register Y |
+| Name                         | Instruction | Options                      | Value                                                                                   | Description                                                                              |
+| ---------------------------- | ----------- | ---------------------------- | --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| Load a value into X register | 0x08 LDX    | [LoadOptions](#load-options) | Buffer [Absolute Index](#absolute-and-relative-indexing) or [variable](#variables) code | Load an RGB value from the [buffer](#buffer) or a [variable](#variables) into register X |
+| Load a value into Y register | 0x09 LDY    | [LoadOptions](#load-options) | Buffer [Absolute Index](#absolute-and-relative-indexing) or [variable](#variables) code | Load an RGB value from the [buffer](#buffer) or a [variable](#variables) into register Y |
 
 #### Load options
 
-| Name       | Option | Description                                                         |
-| ---------- | ------ | ------------------------------------------------------------------- |
-| Load Size  | 0x00 S | Load the [buffer size](#size-number-of-leds) (No value is required) |
-| Load RED   | 0x01 R | Load the 8-bit RED portion of the [buffer](#buffer)                 |
-| Load GREEN | 0x02 G | Load the 8-bit GREEN portion of the [buffer](#buffer)               |
-| Load BLUE  | 0x03 B | Load the 8-bit BLUE portion of the [buffer](#buffer)                |
+| Name          | Option | Description                                           |
+| ------------- | ------ | ----------------------------------------------------- |
+| Load VARIABLE | 0x00 $ | Load a [variable](#variables) by code                 |
+| Load RED      | 0x01 R | Load the 8-bit RED portion of the [buffer](#buffer)   |
+| Load GREEN    | 0x02 G | Load the 8-bit GREEN portion of the [buffer](#buffer) |
+| Load BLUE     | 0x03 B | Load the 8-bit BLUE portion of the [buffer](#buffer)  |
 
 ### Other Instructions
 | Name           | Instruction | Options | Value | Description                                                                                                                     |
@@ -161,13 +162,17 @@ Manipulation of the inner [registers](#registers)
 | Null Operation | 0xFE	NOP    | None    | None  | (Does nothing) Set by [newton](#newton) when an empty line or a comment is found, can also be specified with the `NOP`` literal |
 | EXCEPTION      | 0xFF        | None    | None  | (Aborts execution) Set by [newton](#newton) when an unrecognized instruction literal is found                                   |
 
-## Standard Communication Protocols
-### Bluetooth (BLE)
+## 📡 Standard Communication Protocols
+### 🔵 Bluetooth (BLE)
 the _Prism Service_ only contains one characteristic which is the _Newton Characteristic_, this characteristic's value is 16-bit and is Read & Write enabled
 
 When the characteristic is written (in _16-bit Big Endian_ format), the value is interpreted as an [instruction](#instruction-set). Otherwise, when the characteristic is read, the X (MSB) and Y (LSB) registers are returned concatenated in _Big Endian_ format
 
 #### GATT Description
+GATT definitions are available in [libnewton](#libnewton):
+`/libnewton/c/include/newton/drivers/bluetooth.h` for C and 
+`/libnewton/cpp/include/newton/drivers/bluetooth.hxx` for C++
+
 - Prism Service UUID: `a7a37338-0c20-4779-b75a-089c6d7a0ac8`
 - Newton Characteristic
   - __UUID:__ `4e639365-9e62-4d81-8e3d-f0d2bde4ccc6`
@@ -175,73 +180,14 @@ When the characteristic is written (in _16-bit Big Endian_ format), the value is
   - __Unit:__ 0x2700 - unitless
   - __Format:__ 0x06 - uint16 (Big Endian)
 
-## Newton
+> 💡 an ESP32 BLE broker is included, built it with [PlatformIO](https://platformio.org/) inside the `/tools/ble_controller` directory.
+
+## 🔭 Newton
 Newton is the name given to the _Prism instruction interpreter_ therefore a _Newton Interpreter_ is required in every [slave](#slave) device.
 
-a [FastLED](http://fastled.io/) newton compatible (C++ header-only) interpreter library is bundled ready to use `/fastled/include/newton_fastled.hxx`. Usage examples  can be found in `/fastled/examples`
+a [FastLED](http://fastled.io/) newton compatible (C++ header-only) interpreter library is bundled ready to use (`/libnewton/cpp/include/newton/drivers/fastled.hxx`)
 
-### libnewton
-A C header-only library is bundled (`/libnewton/include`) and contains all the Newton interpreter definitions. Include the header with
-
-Include the whole library with:
-```c
-#include <newton.h>
-```
-
-Or include only the required modules with
-```c
-#include <newton/registers.h>
-#include <newton/instructions.h>
-#include <newton/parser.h>
-```
-- `/libnewton/include/newton/parser.h` constains functions for _Instruction Literal Parsing_, _Binary Format Parsing_ and _Binary Format Writing_.
-
-```c
-PrismInstruction Newton_ParseInstructionU16(uint16_t byte);
-PrismInstruction Newton_ParseInstructionLiteral(const char *instruction);
-uint16_t Newton_WriteInstructionToU16(const PrismInstruction instruction);
-```
-
-- `/libnewton/include/newton/instructions.h`
-Contains all the Newton definitions like the [Prism Instruction Set](#instruction-set) and the corresponding options.
-
-```c
-typedef struct {
-  PrismInstructionSet instruction;
-  PrismInstructionOptions options;
-  uint8_t value;
-} PrismInstruction;
-```
-
-```c
-typedef enum {
-  PRISM_INSTRUCTION_UPDATE = 0x00,
-  /* ...  */
-  PRISM_INSTRUCTION_LOADY = 0x09,
-  PRISM_IGNORE_INSTRUCTION = 0xFE,
-  PRISM_EXCEPTION = 0xFF,
-} PrismInstructionSet;
-```
-```c
-typedef union {
-  struct NoOptions;
-  enum {
-    PRISM_OPTION_SELECT_ABSOLUTE = 0,
-    PRISM_OPTION_SELECT_RELATIVE = 1
-  } SelectOptions;
-  enum /* ... */ RangeOptions;
-  enum /* ... */ ColorOptions;
-  enum /* ... */ EffectOptions;
-  enum /* ... */ TimeOptions;
-  enum /* ... */ LoadOptions;
-} PrismInstructionOptions;
-```
-
-- `/libnewton/include/newton/registers.h` Contains the structure with the [registers](#registers)
-
-```c
-typedef struct {
-  uint8_t X;
-  uint8_t Y;
-} NewtonRegisters;
-```
+### 📚️ libnewton
+libnewton is a set of libraries that contains all the _Prism specifications_ and allow the creation of the a _Newton Interpreter_, libnewton is currently officially supported by the following languages:
+- [X] **C** Add `/libnewton/c` to the include path
+- [X] **C++** Add `/libnewton/cpp` to the include path
