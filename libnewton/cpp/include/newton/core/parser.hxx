@@ -134,8 +134,7 @@ namespace newton::core
 			{
 			case '$':
 				parsedInstruction.options.LoadOptions = InstructionOptions::OPTION_LOAD_VARIABLE;
-				// Instruction already parsed, return the instruction
-				return parsedInstruction;
+				break;
 
 			case 'R':
 				parsedInstruction.options.LoadOptions = InstructionOptions::OPTION_LOAD_R;
