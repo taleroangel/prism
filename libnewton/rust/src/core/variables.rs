@@ -7,6 +7,7 @@ pub enum VariablesCodes {
     BufferSize = 0x01,
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct Variables {
     pub buffer_size: u8,
     _newton_version: u8,
