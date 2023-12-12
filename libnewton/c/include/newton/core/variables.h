@@ -14,7 +14,7 @@ typedef struct {
   uint8_t BufferSize;
 } NewtonVariables;
 
-inline NewtonVariables Newton_CreateVariables(uint8_t BufferSize) {
+static inline NewtonVariables Newton_CreateVariables(uint8_t BufferSize) {
   return (NewtonVariables){.NewtonVersion = LIBNEWTON_VERSION,
                            .BufferSize = BufferSize};
 }

@@ -191,3 +191,4 @@ a [FastLED](http://fastled.io/) newton compatible (C++ header-only) interpreter 
 libnewton is a set of libraries that contains all the _Prism specifications_ and allow the creation of the a _Newton Interpreter_, libnewton is currently officially supported by the following languages:
 - [X] **C** Add `/libnewton/c` to the include path
 - [X] **C++** Add `/libnewton/cpp` to the include path
+- [ ] **Rust** _(👷‍♀️ Under development)_ The `libnewton` crate is missing the `ParseInstructionFromLiteral` function.

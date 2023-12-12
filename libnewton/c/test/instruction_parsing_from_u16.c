@@ -180,4 +180,9 @@ void assert_instruction(uint16_t raw, PrismInstructionSet instruction,
   assert(*((uint8_t *)&parsed.options) == *((uint8_t *)&options));
   // Assert value (bit by bit)
   assert(parsed.value == value);
+
+
+  // Write instruction into u16
+  uint16_t reversed = Newton_WriteInstructionToU16(parsed);
+  assert(raw == reversed);
 }

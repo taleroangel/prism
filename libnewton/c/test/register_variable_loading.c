@@ -1,7 +1,7 @@
 
-#include "newton/core/instruction.h"
-#include "newton/core/parser.h"
-#include "newton/defs.h"
+#include <newton/defs.h>
+#include <newton/core/instruction.h>
+#include <newton/core/parser.h>
 #include <newton/core/registers.h>
 #include <newton/core/variables.h>
 
