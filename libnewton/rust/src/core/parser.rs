@@ -8,14 +8,6 @@ use super::{
 };
 
 impl Instruction {
-    pub fn new_ignore() -> Self {
-        Instruction {
-            instruction: InstructionSet::Ignore,
-            options: InstructionOptions::None,
-            value: 0x00,
-        }
-    }
-
     pub fn parse_from_u16(bytes: u16) -> Result<Self, NewtonError> {
         // Get instruction bytes
         let raw_instruction = RawInstruction {

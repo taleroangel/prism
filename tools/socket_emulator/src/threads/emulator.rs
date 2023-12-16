@@ -124,5 +124,4 @@ pub fn emulator_thread(
     // Set the execution flag
     continue_execution.store(false, Ordering::Relaxed);
     trace!(target: "emulator", "Set stopping_flag to true")
-	
 }

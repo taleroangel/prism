@@ -44,3 +44,29 @@ pub struct Instruction {
     pub options: InstructionOptions,
     pub value: u8,
 }
+
+impl Instruction {
+	pub fn ignore() -> Self {
+        Instruction {
+            instruction: InstructionSet::Ignore,
+            options: InstructionOptions::None,
+            value: 0x00,
+        }
+    }
+
+    pub fn update() -> Self {
+        Self {
+            instruction: InstructionSet::Update,
+            options: InstructionOptions::None,
+            value: 0x00,
+        }
+    }
+
+	pub fn clear() -> Self {
+        Self {
+            instruction: InstructionSet::Clear,
+            options: InstructionOptions::None,
+            value: 0x00,
+        }
+    }
+}

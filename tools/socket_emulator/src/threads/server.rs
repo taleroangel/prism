@@ -22,6 +22,8 @@ pub fn server_thread(
     let tcp_listener = TcpListener::bind(socket_addr)
         .expect(format!("Failed to bind for socket: {:?}", socket_addr).as_str());
 
+    info!(target: "main", "Listening for connections on `{:#}`", socket_addr);
+
     // Set as non blocking
     tcp_listener.set_nonblocking(true).unwrap();
 

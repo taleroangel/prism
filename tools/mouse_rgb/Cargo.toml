@@ -1,0 +1,10 @@
+[package]
+name = "mouse_rgb"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+clap = { version = "4.4.11", features = ["derive"] }
+colors-transform = "0.2.11"
+sdl2 = "0.36.0"
+libnewton = { path = "../../libnewton/rust" }
