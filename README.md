@@ -192,3 +192,4 @@ libnewton is a set of libraries that contains all the _Prism specifications_ and
 - [X] **C** Add `/libnewton/c` to the include path
 - [X] **C++** Add `/libnewton/cpp` to the include path
 - [ ] **Rust** _(👷‍♀️ Under development)_ The `libnewton` crate is missing the `ParseInstructionFromLiteral` function.
+- [ ] **C#** _(👷‍♀️ Under development)_  use namespace `Prism.Newton`, only u16 parsing and writing are implemented
