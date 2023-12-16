@@ -10,18 +10,18 @@ pub enum VariablesCodes {
 #[derive(Debug, Clone, Copy)]
 pub struct Variables {
     pub buffer_size: u8,
-    _newton_version: u8,
+    newton_version: u8,
 }
 
 impl Variables {
     pub fn new(buffer_size: u8) -> Self {
         Self {
             buffer_size,
-            _newton_version: crate::LIBNEWTON_VERSION,
+            newton_version: crate::LIBNEWTON_VERSION,
         }
     }
 
     pub fn newton_version(&self) -> u8 {
-        self._newton_version
+        self.newton_version
     }
 }

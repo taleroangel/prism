@@ -1,3 +1,5 @@
+use std::{fmt::Display, ops};
+
 use super::core::{
     errors::NewtonError,
     instruction::{Instruction, InstructionSet},
@@ -26,6 +28,34 @@ impl BuffItem {
     }
 }
 
+impl ops::Add<BuffItem> for BuffItem {
+    type Output = BuffItem;
+    fn add(self, rhs: BuffItem) -> Self::Output {
+        Self {
+            red: self.red.saturating_add(rhs.red),
+            green: self.green.saturating_add(rhs.green),
+            blue: self.blue.saturating_add(rhs.blue),
+        }
+    }
+}
+
+impl ops::Add<u8> for BuffItem {
+    type Output = BuffItem;
+    fn add(self, rhs: u8) -> Self::Output {
+        Self {
+            red: self.red.saturating_add(rhs),
+            green: self.green.saturating_add(rhs),
+            blue: self.blue.saturating_add(rhs),
+        }
+    }
+}
+
+impl Display for BuffItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "0x{:02x}{:02x}{:02x}", self.red, self.green, self.blue)
+    }
+}
+
 /// Action to take by the interpreter
 #[derive(Debug, Clone, Copy)]
 pub enum InterpreterAction {
@@ -34,7 +64,7 @@ pub enum InterpreterAction {
     Sleep(u64),
 }
 
-#[derive(Clone)]
+#[derive(Debug, Clone)]
 pub struct Interpreter {
     pub public_buffer: Vec<BuffItem>,
     buffer: Vec<BuffItem>,
@@ -59,9 +89,20 @@ impl Interpreter {
         }
     }
 
-    // Transforms a relative index into an aboslute one
-    fn map_relative_index(&self, relative_index: u8) -> u8 {
-        (((relative_index as u16) * ((self.buffer_size - 1) as u16)) / (u8::MAX as u16)) as u8
+	pub fn current_selection(&self) -> u8 {
+		self.current_selection
+	}
+
+	pub fn current_range(&self) -> (u8, u8) {
+		self.current_range
+	}
+
+    pub fn registers(&self) -> Registers {
+        self.registers
+    }
+
+    pub fn variables(&self) -> Variables {
+        self.variables
     }
 
     /// Interpret an [Instruction], returns either a [NewtonError] or an [NewtonInterpreterAction]
@@ -83,9 +124,9 @@ impl Interpreter {
             InstructionSet::Sleep => match instruction.options {
                 InstructionOptions::Time(time_type) => match time_type {
                     TimeOptions::Ms => Ok(InterpreterAction::Sleep(instruction.value as u64)),
-                    TimeOptions::Sec => Ok(InterpreterAction::Sleep(
-                        (instruction.value as u64) * 1_000,
-                    )),
+                    TimeOptions::Sec => {
+                        Ok(InterpreterAction::Sleep((instruction.value as u64) * 1_000))
+                    }
                     TimeOptions::Min => Ok(InterpreterAction::Sleep(
                         (instruction.value as u64) * 60_000,
                     )),
@@ -140,7 +181,7 @@ impl Interpreter {
 
             InstructionSet::Set => match instruction.options {
                 InstructionOptions::Color(color_value) => match color_value {
-                    ColorOptions::Blue => {
+                    ColorOptions::Red => {
                         self.buffer[self.current_selection as usize].red = instruction.value;
                         Ok(InterpreterAction::NoAction)
                     }
@@ -148,7 +189,7 @@ impl Interpreter {
                         self.buffer[self.current_selection as usize].green = instruction.value;
                         Ok(InterpreterAction::NoAction)
                     }
-                    ColorOptions::Red => {
+                    ColorOptions::Blue => {
                         self.buffer[self.current_selection as usize].blue = instruction.value;
 
                         Ok(InterpreterAction::NoAction)
@@ -162,20 +203,20 @@ impl Interpreter {
 
             InstructionSet::Fill => match instruction.options {
                 InstructionOptions::Color(color_value) => match color_value {
-                    ColorOptions::Blue => {
+                    ColorOptions::Red => {
                         for vit in self.current_range.0..=self.current_range.1 {
                             self.buffer[vit as usize].red = instruction.value;
                         }
                         Ok(InterpreterAction::NoAction)
                     }
                     ColorOptions::Green => {
-                        for vit in self.current_range.0..self.current_range.1 {
+                        for vit in self.current_range.0..=self.current_range.1 {
                             self.buffer[vit as usize].green = instruction.value;
                         }
                         Ok(InterpreterAction::NoAction)
                     }
-                    ColorOptions::Red => {
-                        for vit in self.current_range.0..self.current_range.1 {
+                    ColorOptions::Blue => {
+                        for vit in self.current_range.0..=self.current_range.1 {
                             self.buffer[vit as usize].blue = instruction.value;
                         }
 
@@ -252,10 +293,50 @@ impl Interpreter {
                 }),
             },
 
-            InstructionSet::Blur => panic!("Effects are not yet implemented"),
+            InstructionSet::Blur => {
+                self.blur(instruction.value);
+                Ok(InterpreterAction::NoAction)
+            }
 
             InstructionSet::Ignore => Ok(InterpreterAction::NoAction),
             InstructionSet::Exception => Err(NewtonError::InterpreterException),
+        }
+    }
+
+    /// Transforms a relative index into an aboslute one
+    fn map_relative_index(&self, relative_index: u8) -> u8 {
+        (((relative_index as u16) * ((self.buffer_size - 1) as u16)) / (u8::MAX as u16)) as u8
+    }
+
+    /// Took from FastLED lib8tion <http://fastled.io/docs/scale8_8h_source.html#l00357>
+    fn nscale(&self, item: &mut BuffItem, scale: u8) {
+        let scaled_fixed = (scale as u16) + 1;
+        item.red = (((item.red as u16) * scaled_fixed) >> 8) as u8;
+        item.green = (((item.green as u16) * scaled_fixed) >> 8) as u8;
+        item.blue = (((item.blue as u16) * scaled_fixed) >> 8) as u8;
+    }
+
+    /// Took from FastLED Effects <http://fastled.io/docs/colorutils_8cpp_source.html>
+    fn blur(&mut self, blur_amount: u8) {
+        let keep = u8::MAX - blur_amount;
+        let seep = blur_amount >> 1;
+        let mut carryover = BuffItem::new();
+
+        // Traverse array
+        for i in self.current_range.0..=self.current_range.1 {
+            let mut cur = self.buffer[i as usize];
+            let mut part = cur; // Copy trait
+
+            self.nscale(&mut part, seep);
+            self.nscale(&mut cur, keep);
+
+            cur = cur + carryover;
+            if i != 0 {
+                self.buffer[(i - 1) as usize] = self.buffer[(i - 1) as usize] + part;
+            }
+
+            self.buffer[i as usize] = cur;
+            carryover = part;
         }
     }
 }

@@ -24,11 +24,14 @@ FILL B 00
 UPDT
 
 -- Set middle LED to Green
-SEL % 80
+SEL % 81
 SET R 00
 SET G FF
 SET B 00
 UPDT
+
+-- Sleep for 5 seconds
+SLP SEC 5
 
 -- Select center of the strip
 RAN % 40
@@ -64,14 +67,17 @@ SLP SEC 01
 EBLR RAN FF
 UPDT
 
+-- Sleep for 5 seconds
+SLP SEC 05
+
 -- Set first LED to white
-SEL # 0
+SEL # 00
 SET R FF
 SET G FF
 SET B FF
 
 -- Set second LED to black
-SEL # 1
+SEL # 01
 SET R 00
 SET G 00
 SET B 00
