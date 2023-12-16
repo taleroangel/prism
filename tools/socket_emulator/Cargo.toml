@@ -7,6 +7,7 @@ description = "LED strip emulator with SDL and communication via sockets"
 
 [dependencies]
 clap = { version = "4.4.11", features = ["derive"] }
+fltk = "1.4.19"
 libnewton = { path = "../../libnewton/rust" }
 log = { version = "0.4.20", features = ["std"] }
 pretty_env_logger = "0.5.0"
