@@ -1,0 +1,48 @@
+; New script with state machine enabled
+BEGIN
+
+; Use relative indexing
+RIDX
+
+; Hold changes until update
+HOLD
+
+; Set the color HSL(0%, 0%, 0%) into all the leds between (0 and 255)
+FILL (#00 #FF) (#00 #00 #00)
+
+loop:
+
+    ; Set LEDS to black and wait 1 sec
+    JMP black
+    DELAY SEC 1
+
+    ; Set LEDS to white and wait 1 sec
+    JMP white
+    DELAY SEC 1
+
+    JMP loop
+
+black:
+
+    ; Set level to 0%
+    LFILL (#00 #FF) 0
+
+    ; Update contents of the LED
+    UPDATE
+
+    ; Return from the routine
+    RET 0
+
+white:
+
+    ; Set level to 100%
+    LFILL (#00 #FF) 255
+
+    ; Update contents of the LED
+    UPDATE
+
+    ; Return from the routine
+    RET 0
+
+; Mark the end of the script
+RUN

@@ -1,0 +1,40 @@
+; New script with state machine enabled
+BEGIN
+
+; Use relative indexing
+RIDX
+
+; Hold changes until update
+HOLD
+
+; Set the color HSL(0%, 100%, 50%) into all the leds between (0 and 255)
+FILL (0 #FF) (0 255 127)
+
+; Register $0 keeps track of the maximum value
+LOAD $0 #FF
+
+; Register $1 is going to keep track of the hue
+LOAD $1 0
+
+loop:
+
+    ; Change the hue of the LED strip with the value of $1
+    HFILL (0 255) $1
+
+    ; Update the contents of the strip
+    UPDATE
+
+    ; Wait for 1 second
+    DELAY SEC 1
+
+    ; Hue takes 5 steps of 51 each (from 0-255)
+    ADD $1 51
+
+    ; Loop while iterator hasn't reached max value
+    BNE $0 $1 loop
+
+# Stop
+HALT 0
+
+; Mark the end of the script and run it
+RUN

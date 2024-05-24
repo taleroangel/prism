@@ -1,0 +1,19 @@
+[package]
+name = "prism-assembler"
+version = "1.0.0-beta"
+edition = "2021"
+
+authors = ["Angel Talero <angelgotalero@outlook.com>"]
+description = "Assembler for the (Prism Assembly Language) into (Prism Binary Format)"
+
+repository = "https://github.com/taleroangel/prism"
+license = "GPL-3.0"
+readme = "../README.md"
+
+[dependencies]
+anyhow = { version = "1.0.86" }
+logos = { version = "0.14.0" }
+thiserror = { version = "1.0.61" }
+regex = { version = "1.10.4" }
+clap = { version = "4.5.4", features = ["derive"] }
+libnewton = { version = "2.0.0-beta" }

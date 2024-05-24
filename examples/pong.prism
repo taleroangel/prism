@@ -1,0 +1,76 @@
+; New script with state machine enabled
+BEGIN
+
+; Use absolute indexing
+AIDX
+
+; Apply instructions immediately without updating
+NHOLD
+
+# Load 0 into $1 for using into FILL
+LOAD $1 0
+
+; Set the color HSL(0%, 0%, 0%) into all the leds between (0 and BUFFER_SIZE)
+FILL ($1 $0) (0 0 0)
+
+; Load immediate into register $0 value 0
+LOAD $1 0
+
+; Set the first LED value
+LPAINT $1 #FF
+
+loop:
+
+    ; Move dot to the right until the end of the strip
+    rloop:
+
+      ; Move one dot to the right
+      JMP rmove
+
+      ; Branch if $RV and $0 are not equal
+      BNE $RV $0 rloop
+
+    ; Move dot to the left until the end of the strip
+    lloop:
+
+      ; Move one dot to the left
+      JMP lmove
+
+      ; Branch if $RV and 0x00 are not equal
+      BNE $RV 0 lloop
+
+    ; Begin the loop once again
+    JMP loop
+
+; Custom routine for moving the dot to the right
+rmove:
+
+  ; Reapply HSL Level 0% to last modified LED
+  LPAINT $1 0
+
+  ; Increment the counter in $1
+  ADD $1 1
+
+  ; Set the HSL Level to 100% on index stored in $1
+  LPAINT $1 #FF
+
+  ; Return the counter value
+  RET $1
+
+; Custom routine for moving the dot to the left
+lmove:
+
+  ; Reapply HSL Level 0% to last modified LED
+  LPAINT $1 00
+
+  ; Decrease the counter in $1
+  SUB $1 1
+
+  ; Set the HSL Level to 100% on index stored in $1
+  LPAINT $1 #FF
+
+  ; Return the counter value
+  RET $1
+
+; Mark the end of the script
+RUN
